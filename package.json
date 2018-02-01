@@ -1,0 +1,14 @@
+{
+  "name": "tomorrow-brain-js",
+  "description": "Tomorrow POC on Neural Networks",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Valentin Fries & Vincent Milano",
+  "license": "WTFPL",
+  "dependencies": {
+    "brain.js": "^1.0.3"
+  }
+}
