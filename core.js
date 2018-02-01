@@ -18,10 +18,10 @@ function datasetFromFilename(filename) {
     return new Promise((resolve, reject) => {
         const DATA_PATH = `${__dirname}/${filename}`;
         const DATA_STAT = fs.lstatSync(DATA_PATH);
-        
+
         if (!DATA_STAT.isFile())
             reject(DATA_PATH, '- Should be a file');
-        
+
         const DATA_STREAM = fs.readFileSync(DATA_PATH);
         const DATA_SET = JSON.parse(DATA_STREAM);
 
@@ -64,37 +64,44 @@ function trainNN(options) {
 }
 
 function predictNN(options) {
-    return new Promise((resolve, reject) => {
-        const DATA_PATH = `${__dirname}/${options.dataFile}`;
-        const INPUTS_PATH = `${__dirname}/${options.inputsFile}`;
 
-        const DATA_STAT = fs.lstatSync(DATA_PATH);
-        const INPUTS_STAT = fs.lstatSync(INPUTS_PATH);
-        
-        if (!DATA_STAT.isFile())
-            reject(DATA_PATH + ': Should be a file');
-        else if (!INPUTS_STAT.isFile())
-            reject(INPUTS_PATH + ': Should be a file');
-        
-        const DATA_STREAM = fs.readFileSync(DATA_PATH);
-        const INPUTS_STREAM = fs.readFileSync(INPUTS_PATH);
-
-        const DATA_SET = JSON.parse(DATA_STREAM);
-        const INPUTS_SET = JSON.parse(INPUTS_STREAM);
-        
+    function trainNet(dataset) {
         const _NET = new brain.NeuralNetwork(NN_OPTS);
-        _NET.train(DATA_SET);
-        
+        _NET.train(dataset);
+        return _NET;
+    }
+
+    function loadInputs(net, options) {
+        return datasetFromFilename(options.inputsFile).then(inputsSet => {
+            return { net, inputsSet, options };
+        });
+    }
+
+    function guess(elements) {
+        const _NET = elements.net;
+        const INPUTS_SET = elements.inputsSet;
+
         const GUESSES = INPUTS_SET.reduce((acc, test) => {
             let guess = _NET.run(test.input);
             acc.push(guess);
             return acc;
         }, []);
-        
-        const OUTPUT_PATH = `${__dirname}/${options.outputFile}`;
-        const writing = fs.writeFileSync(OUTPUT_PATH, JSON.stringify(GUESSES));
-    
-        resolve('Success');
+
+        return { results: GUESSES, options: elements.options };
+    }
+
+    function writeResults(elements) {
+        const OUTPUT_PATH = `${__dirname}/${elements.options.outputFile}`;
+        return fs.writeFileSync(OUTPUT_PATH, JSON.stringify(elements.results));
+    }
+
+    return new Promise((resolve, reject) => {
+        return datasetFromFilename(options.dataFile)
+        .then(trainNet)
+        .then(net => loadInputs(net, options))
+        .then(guess)
+        .then(writeResults)
+        .catch(reject);
     });
 }
 
@@ -104,6 +111,7 @@ module.exports = (config) => {
 
     console.log(OPTIONS);
     console.log(ACTION);
+    console.log(ACTIONS.PREDICT);
 
     return new Promise((resolve, reject) => {
         switch (ACTION) {
