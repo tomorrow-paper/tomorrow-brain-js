@@ -58,8 +58,24 @@ function testNN(options) {
 }
 
 function trainNN(options) {
+
+    function trainNet(dataset) {
+        const _NET = new brain.NeuralNetwork(NN_OPTS);
+        _NET.train(dataset);
+        return _NET;
+    }
+
+    function saveNet(net, options) {
+        const jsonNet = net.toJSON();
+        const OUTPUT_PATH = `${__dirname}/${options.outputFile}`;
+        return fs.writeFileSync(OUTPUT_PATH, JSON.stringify(jsonNet));
+    }
+
     return new Promise((resolve, reject) => {
-        reject('Not implemented yet');
+        return datasetFromFilename(options.dataFile)
+        .then(trainNet)
+        .then(net => saveNet(net, options))
+        .catch(reject);
     });
 }
 
@@ -90,7 +106,7 @@ function predictNN(options) {
         return { results: GUESSES, options: elements.options };
     }
 
-    function writeResults(elements) {
+    function saveResults(elements) {
         const OUTPUT_PATH = `${__dirname}/${elements.options.outputFile}`;
         return fs.writeFileSync(OUTPUT_PATH, JSON.stringify(elements.results));
     }
@@ -100,7 +116,7 @@ function predictNN(options) {
         .then(trainNet)
         .then(net => loadInputs(net, options))
         .then(guess)
-        .then(writeResults)
+        .then(saveResults)
         .catch(reject);
     });
 }
@@ -108,10 +124,6 @@ function predictNN(options) {
 module.exports = (config) => {
     const OPTIONS = config.options;
     const ACTION = config.action;
-
-    console.log(OPTIONS);
-    console.log(ACTION);
-    console.log(ACTIONS.PREDICT);
 
     return new Promise((resolve, reject) => {
         switch (ACTION) {
