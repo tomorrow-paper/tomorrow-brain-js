@@ -102,9 +102,6 @@ module.exports = (config) => {
     const OPTIONS = config.options;
     const ACTION = config.action;
 
-    console.log(OPTIONS);
-    console.log(ACTION);
-
     return new Promise((resolve, reject) => {
         switch (ACTION) {
             case ACTIONS.TEST:
